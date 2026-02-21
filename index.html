@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sorteador Futebol ⚖️ Times 5 – Sobra Inclusa</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--text:#0f172a;--sec:#64748b;--blue:#0070d1;--red:#ef4444;--green:#10b981;--surf:#f8fafc;--bord:#e2e8f0;--warn:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:0;user-select:none}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0 0 120px 0}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.95);border-bottom:1px solid var(--bord);padding:15px 20px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(5px)}
+.header-left{display:flex;align-items:center;gap:15px}
+.logo{font-size:1.2rem}
+.header-btn{background:transparent;border:none;padding:8px;border-radius:50%;font-size:1.4rem;cursor:pointer;transition:0.2s;display:flex;align-items:center;justify-content:center}
+.btn-reset{color:var(--sec)}
+.btn-reset:active{color:var(--red);transform:rotate(-180deg)}
+.container{max-width:600px;margin:0 auto;padding:20px}
+.sec-title{font-size:.85rem;font-weight:700;color:var(--sec);text-transform:uppercase;margin:15px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+input{display:none}
+.chip{background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:8px 4px;text-align:center;font-size:.75rem;font-weight:700;color:var(--text);cursor:pointer;min-height:55px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.05);transition:all 0.1s}
+input:checked+.chip{background:var(--blue);border-color:var(--blue);color:#fff;transform:translateY(-2px);box-shadow:0 8px 15px -3px rgba(0,112,209,.3)}
+.res-area{display:none;border-top:1px solid var(--bord);margin-top:30px;padding-top:20px;animation:fadeIn 0.5s ease}
+.card{background:#fff;border:1px solid var(--bord);border-radius:12px;margin-bottom:15px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.05)}
+.chead{padding:12px 15px;font-size:.9rem;font-weight:700;text-transform:uppercase;display:flex;justify-content:space-between}
+.c-blue{background:#f0f9ff;color:var(--blue)}
+.c-red{background:#fef2f2;color:var(--red)}
+.c-green{background:#f0fdf4;color:var(--green)}
+li{padding:12px 15px;border-bottom:1px solid var(--bord);font-size:.9rem;font-weight:600;color:#334155}
+li:last-child{border:none}
+.dock{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:92%;max-width:500px;background:#fff;padding:12px 20px;border-radius:50px;box-shadow:0 20px 50px -10px rgba(0,0,0,.15);display:flex;justify-content:space-between;align-items:center;border:1px solid var(--bord);z-index:100;gap:10px}
+.dock-left{display:flex;flex-direction:column;margin-right:auto}
+.dock-buttons{display:flex;gap:8px}
+.m-btn{background:var(--text);color:#fff;border:0;padding:10px 16px;border-radius:30px;font-weight:700;font-size:.75rem;text-transform:uppercase;transition:all 0.2s;letter-spacing:0.5px;cursor:pointer;white-space:nowrap}
+.m-btn.dis{background:#cbd5e1;color:#94a3b8;pointer-events:none}
+.m-btn.next{background:var(--green);box-shadow:0 4px 15px rgba(16,185,129,.4)}
+.m-btn.sobra{background:var(--blue);box-shadow:0 4px 15px rgba(0,112,209,.4)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body oncontextmenu="return false">
+
+<header>
+    <div class="header-left"><div class="logo">🔵🔴</div>𝗦𝗢𝗥𝗧𝗘𝗜𝗔 𝗧𝗜𝗠𝗘𝗦</div>
+    <button class="header-btn btn-reset" onclick="app.resetar()" title="Reiniciar">↩️</button>
+</header>
+
+<div class="container">
+    <div id="main">
+        <div class="sec-title">
+            <span id="labelTitulo">QUEM VEIO?</span>
+            <small onclick="app.limparSelecao()" style="color:var(--red);cursor:pointer;font-size:0.7rem">LIMPAR</small>
+        </div>
+        <div id="gridJogadores" class="grid"></div>
+    </div>
+
+    <div id="areaResultados" class="res-area">
+        <div class="sec-title" style="justify-content:center;color:var(--blue)" id="labelResultado">TIMES DEFINIDOS</div>
+        <div id="containerTimes"></div>
+        <div style="height:100px"></div>
+    </div>
+</div>
+
+<div class="dock">
+    <div class="dock-left">
+        <div style="font-size:1.3rem;font-weight:800;line-height:1" id="contador">0</div>
+        <div style="font-size:.65rem;color:#94a3b8;font-weight:600" id="statusLabel">JOGADORES</div>
+    </div>
+    <div class="dock-buttons">
+        <button id="botaoSobra" class="m-btn dis" onclick="app.adicionarSobra()" style="display:none;">➕ SOBRA</button>
+        <button id="botaoAcao" class="m-btn dis" onclick="app.acao()">SORTEAR TUDO</button>
+    </div>
+</div>
+
+<script>
+const TAMANHO_TIME = 5; // Times de 5 jogadores
+const grupoA = ["NETO","BIDINHO","MAICON DG","ROSSETI","MAYCON ALVES","DIEGO","ZE GOTINHA","NEMUEL","RAMON"];
+const grupoC = ["LUCIO","HUGO","ESDRAS","BRUNO","ELDER","ISOLINO","JOEL","PAULO","VAGNER","LALAU","ELIEL","FLAVIO","LUCIANO","FUSCAO","FELIPE","IGOR"];
+const grupoB = ["BETINHO","NECO","GILLIARDE","XIXICO","DIM","FABRICIO","JUCA","ORLANDO","EDINHO","JULIO","RAFAEL","BRANCO","SAMUEL","TONINHO","BIEL","MAYCON CASTRO","SHAIDER","DAVID","MATEUS BAETA","RAFAEL SANTOS"];
+const todosJogadores = [...new Set([...grupoA, ...grupoB, ...grupoC])].sort();
+
+const app = function(){
+    let audioCtx;
+    let estado = 'INICIO';
+    let listaSobra = [];
+    
+    const UI = {
+        grid: document.getElementById('gridJogadores'),
+        contador: document.getElementById('contador'),
+        botao: document.getElementById('botaoAcao'),
+        botaoSobra: document.getElementById('botaoSobra'),
+        areaRes: document.getElementById('areaResultados'),
+        containerTimes: document.getElementById('containerTimes'),
+        status: document.getElementById('statusLabel'),
+        lblRes: document.getElementById('labelResultado'),
+        lblTit: document.getElementById('labelTitulo')
+    };
+
+    function somPS5(tipo) {
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const gain = audioCtx.createGain();
+        gain.connect(audioCtx.destination);
+
+        if(tipo === 'click') {
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now); 
+            osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.connect(gain);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else {
+            [523.25, 659.25, 783.99].forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, now);
+                g.gain.setValueAtTime(0, now);
+                g.gain.linearRampToValueAtTime(0.06, now + 0.1);
+                g.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+                osc.connect(g);
+                g.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 1.5);
+            });
+        }
+    }
+
+    function salvarCache() {
+        const marcados = Array.from(document.querySelectorAll('.chk:checked')).map(c => c.value);
+        const dados = {
+            estado,
+            listaSobra,
+            marcados,
+            htmlResultados: UI.containerTimes.innerHTML,
+            visibilidadeResultados: UI.areaRes.style.display,
+            textoTitulo: UI.lblTit.innerText
+        };
+        localStorage.setItem('sorteador_futebol_cache', JSON.stringify(dados));
+    }
+
+    function carregarCache() {
+        const cache = localStorage.getItem('sorteador_futebol_cache');
+        if (!cache) return;
+        const d = JSON.parse(cache);
+        
+        estado = d.estado;
+        listaSobra = d.listaSobra;
+        UI.containerTimes.innerHTML = d.htmlResultados;
+        UI.areaRes.style.display = d.visibilidadeResultados;
+        UI.lblTit.innerText = d.textoTitulo;
+
+        document.querySelectorAll('.chk').forEach(input => {
+            if (d.marcados.includes(input.value)) input.checked = true;
+        });
+
+        if (estado === 'JOGO_ANDAMENTO') {
+            UI.botao.classList.add('next');
+            UI.botaoSobra.style.display = 'inline-block';
+        }
+        app.atualizarUI(false); 
+    }
+
+    function embaralhar(arr) { 
+        return arr.sort(() => Math.random() - 0.5); 
+    }
+
+    function criarCard(jogadores, titulo, tipo) {
+        let cl = tipo == 'sobra' ? 'c-red' : (tipo == 'novo' ? 'c-green' : 'c-blue');
+        return `<div class="card"><div class="chead ${cl}"><span>${titulo}</span><span style="opacity:.6;font-size:.8rem">${jogadores.length} JOG.</span></div><ul>${jogadores.map(p => `<li>${p}</li>`).join('')}</ul></div>`;
+    }
+
+    // Distribuição round-robin: cada jogador vai para o próximo destino (0..numDestinos-1)
+    function distribuirRoundRobin(jogadores, numDestinos) {
+        const destinos = Array.from({ length: numDestinos }, () => []);
+        jogadores.forEach((jogador, index) => {
+            destinos[index % numDestinos].push(jogador);
+        });
+        return destinos;
+    }
+
+    return {
+        init: () => {
+            UI.grid.innerHTML = todosJogadores.map(nome => `<label><input type="checkbox" class="chk" value="${nome}" onchange="app.atualizarUI()"><div class="chip">${nome}</div></label>`).join('');
+            carregarCache();
+        },
+
+        atualizarUI: (tocar = true) => {
+            if(tocar) somPS5('click');
+            const marcados = document.querySelectorAll('.chk:checked').length;
+            UI.contador.innerText = marcados;
+            
+            if (estado === 'INICIO') {
+                UI.botao.innerText = marcados >= TAMANHO_TIME ? "SORTEAR TUDO" : "SELECIONE +";
+                marcados >= TAMANHO_TIME ? UI.botao.classList.remove('dis') : UI.botao.classList.add('dis');
+                UI.botaoSobra.style.display = 'none';
+                const timesCompletos = Math.floor(marcados / TAMANHO_TIME);
+                const sobra = marcados % TAMANHO_TIME;
+                UI.status.innerText = `${timesCompletos} times + ${sobra} sobrando`;
+            } else {
+                UI.botao.innerText = marcados > 0 ? "SORTEAR NOVO" : "MARQUE QUEM SAIU";
+                marcados > 0 ? UI.botao.classList.remove('dis') : UI.botao.classList.add('dis');
+                UI.botaoSobra.style.display = 'inline-block';
+                UI.botaoSobra.classList.toggle('dis', marcados === 0);
+                UI.status.innerText = `Sobra Atual: ${listaSobra.length}`;
+            }
+            salvarCache();
+        },
+
+        resetar: () => { 
+            if(confirm("Deseja limpar tudo?")) {
+                localStorage.removeItem('sorteador_futebol_cache');
+                location.reload(); 
+            }
+        },
+
+        limparSelecao: () => {
+            document.querySelectorAll('.chk').forEach(c => c.checked = false);
+            app.atualizarUI();
+        },
+
+        acao: () => {
+            somPS5('sucesso');
+            if (estado === 'INICIO') app.sorteioInicial();
+            else app.sorteioProximo();
+        },
+
+        // ====================================================
+        // SORTEIO INICIAL – TIMES COM 5 JOGADORES, SOBRA EXATA
+        // ====================================================
+        sorteioInicial: () => {
+            let selecionados = Array.from(document.querySelectorAll('.chk:checked')).map(c => c.value);
+            if (selecionados.length < TAMANHO_TIME) {
+                alert(`Selecione pelo menos ${TAMANHO_TIME} jogadores!`);
+                return;
+            }
+
+            const numTimes = Math.floor(selecionados.length / TAMANHO_TIME);
+            const temSobra = (selecionados.length % TAMANHO_TIME) > 0;
+            const numDestinos = numTimes + (temSobra ? 1 : 0); // times + 1 sobra (se houver)
+
+            // 1. Separar grupos e embaralhar internamente
+            let jogadoresA = embaralhar(selecionados.filter(n => grupoA.includes(n)));
+            let jogadoresB = embaralhar(selecionados.filter(n => grupoB.includes(n)));
+            let jogadoresC = embaralhar(selecionados.filter(n => grupoC.includes(n)));
+
+            // 2. Distribuir cada grupo de forma round-robin entre todos os destinos
+            const destinos = Array.from({ length: numDestinos }, () => []);
+
+            const distribuir = (grupo) => {
+                const aloc = distribuirRoundRobin(grupo, numDestinos);
+                for (let i = 0; i < numDestinos; i++) {
+                    destinos[i].push(...aloc[i]);
+                }
+            };
+            distribuir(jogadoresA);
+            distribuir(jogadoresB);
+            distribuir(jogadoresC);
+
+            // 3. Separar times (primeiros numTimes) e sobra (último, se existir)
+            let times = destinos.slice(0, numTimes);
+            let sobra = temSobra ? destinos[numTimes] : [];
+
+            // 4. Ajustar times para terem exatamente 5 jogadores
+            // 4a. Mover excessos dos times para a sobra
+            for (let t = 0; t < times.length; t++) {
+                while (times[t].length > TAMANHO_TIME) {
+                    sobra.push(times[t].pop()); // move o último jogador
+                }
+            }
+
+            // 4b. Completar times que estão com menos de 5 usando a sobra
+            for (let t = 0; t < times.length; t++) {
+                while (times[t].length < TAMANHO_TIME && sobra.length > 0) {
+                    times[t].push(sobra.shift()); // pega o primeiro da sobra
+                }
+            }
+
+            // Agora todos os times têm 5 jogadores (garantido pela matemática total)
+            // A sobra terá exatamente selecionados.length % 5
+
+            // 5. Embaralhar cada time individualmente (opcional, mas divertido)
+            times = times.map(time => embaralhar(time));
+            sobra = embaralhar(sobra);
+
+            // 6. Renderizar resultados
+            UI.containerTimes.innerHTML = '';
+            for (let i = 0; i < times.length; i++) {
+                UI.containerTimes.innerHTML += criarCard(times[i], `Time ${i+1} (${times[i].length} jog.)`, 'normal');
+            }
+            if (sobra.length > 0) {
+                UI.containerTimes.innerHTML += criarCard(sobra, `Sobra (${sobra.length} jog.)`, 'sobra');
+            }
+
+            // 7. Atualizar estado
+            estado = 'JOGO_ANDAMENTO';
+            listaSobra = sobra;
+            UI.areaRes.style.display = 'block';
+            UI.lblTit.innerText = "MARQUE QUEM SAIU / QUEM CHEGOU:";
+            UI.botao.classList.add('next');
+            UI.botaoSobra.style.display = 'inline-block';
+            app.limparSelecao();
+            salvarCache();
+
+            setTimeout(() => UI.areaRes.scrollIntoView({ behavior: 'smooth' }), 150);
+        },
+
+        // ===========================================
+        // SORTEIO PRÓXIMO – para quando jogadores saem
+        // ===========================================
+        sorteioProximo: () => {
+            let quemSaiu = Array.from(document.querySelectorAll('.chk:checked')).map(c => c.value);
+            if (!quemSaiu.length) {
+                alert("Selecione quem saiu do jogo!");
+                return;
+            }
+            
+            let precisa = TAMANHO_TIME - listaSobra.length;
+            if (quemSaiu.length < precisa) {
+                alert(`Selecione pelo menos ${precisa} jogadores para formar um novo time de ${TAMANHO_TIME}!`);
+                return;
+            }
+            
+            let saidaA = embaralhar(quemSaiu.filter(n => grupoA.includes(n)));
+            let saidaB = embaralhar(quemSaiu.filter(n => grupoB.includes(n)));
+            let saidaC = embaralhar(quemSaiu.filter(n => grupoC.includes(n)));
+            let saidaCombinada = [...saidaA, ...saidaB, ...saidaC];
+            
+            let entrando = saidaCombinada.slice(0, precisa);
+            let novaSobra = saidaCombinada.slice(precisa);
+            let novoTime = [...listaSobra, ...entrando];
+            
+            if (novoTime.length !== TAMANHO_TIME) {
+                alert(`Erro: O novo time deve ter exatamente ${TAMANHO_TIME} jogadores!`);
+                return;
+            }
+            
+            listaSobra = [...novaSobra];
+            novoTime = embaralhar(novoTime);
+            
+            UI.containerTimes.innerHTML = criarCard(novoTime, `PRÓXIMO TIME (${novoTime.length} jog.)`, 'novo');
+            if (listaSobra.length > 0) {
+                UI.containerTimes.innerHTML += criarCard(listaSobra, `NOVA SOBRA (${listaSobra.length} jog.)`, 'sobra');
+            }
+            
+            app.limparSelecao();
+            salvarCache();
+            
+            setTimeout(() => UI.areaRes.scrollIntoView({ behavior: 'smooth' }), 150);
+        },
+
+        // ===========================================
+        // ADICIONAR SOBRA – para quando novos jogadores chegam
+        // ===========================================
+        adicionarSobra: () => {
+            let novos = Array.from(document.querySelectorAll('.chk:checked')).map(c => c.value);
+            if (!novos.length) {
+                alert("Selecione os jogadores que chegaram!");
+                return;
+            }
+
+            // Adiciona os novos jogadores à sobra atual
+            listaSobra = [...listaSobra, ...novos];
+            listaSobra = embaralhar(listaSobra); // opcional: embaralhar a sobra
+
+            // Atualiza a exibição da sobra
+            // Se já houver um card de sobra, substitui; senão, adiciona
+            const sobraExistente = document.querySelector('#containerTimes .card:last-child');
+            if (sobraExistente && sobraExistente.querySelector('.chead.c-red')) {
+                // Substitui o card de sobra
+                sobraExistente.remove();
+            }
+            UI.containerTimes.innerHTML += criarCard(listaSobra, `Sobra (${listaSobra.length} jog.)`, 'sobra');
+
+            app.limparSelecao();
+            salvarCache();
+
+            setTimeout(() => UI.areaRes.scrollIntoView({ behavior: 'smooth' }), 150);
+        }
+    };
+}();
+
+// Inicializar aplicação
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+</script>
+</body>
+</html>
